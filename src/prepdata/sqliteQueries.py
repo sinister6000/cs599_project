@@ -3,7 +3,6 @@ from __future__ import absolute_import, division
 __metaclass__ = type
 
 import codecs
-import math
 
 import peewee as pw
 
@@ -165,15 +164,12 @@ def user_count():
 def checkin_count():
     return pw.SelectQuery(Checkin).count()
 
-if __name__ == '__main__':
+def main():
     db.connect()
-    # venues_to_docs()
-    # update_shout_counts()
-    # topn = topn_venues(50)
-    # topnIDs = ['{}'.format(n.id) for n in topn]
-    # print topnIDs
-    # for c in get_categories(24):
-    #     print c
-    print venue_count()
-
+    venues_to_docs()
+    update_shout_counts()
     db.close()
+
+
+if __name__ == '__main__':
+    main()

@@ -13,7 +13,7 @@ import requests
 
 class Twitter2foursquare(object):
     """
-    This class handles conversion of tweets into foursquare checkins.
+    This class handles conversion of tweets into foursquare checkins into shortened checkins.
     """
 
     def __init__(self):
@@ -21,18 +21,20 @@ class Twitter2foursquare(object):
 
     def tweets_to_checkins(self, fin, fout):
         """
-        Processes tweets.
+        Processes tweets.  Retrieves Foursquare checkins associated with the tweets.
 
         Uses swampapp reference to query foursquare's API for full checkin info. Foursquare API has a max 500 requests
         per hour.
         Checkins come in json format and are output to file.
 
         :param fin: Filename containing raw tweets.
+        :type fin: str
         :param fout: Output filename of foursquare json checkins.
+        :type fout: str
         """
-        with codecs.open(fin, 'r', encoding='utf-8') as tweets_file, codecs.open(fout, 'a', encoding='utf-8') as ch_file:
+        with codecs.open(fin, 'r', encoding='utf-8') as tw_file, codecs.open(fout, 'a', encoding='utf-8') as ch_file:
             count = 1
-            for line in tweets_file:
+            for line in tw_file:
                 try:
                     twt = ujson.loads(line)
                     temp_url = twt['entities']['urls'][0]['expanded_url']
@@ -53,8 +55,12 @@ class Twitter2foursquare(object):
                             break
 
                     rJson = r.json()
-                    ch_file.write(ujson.dumps(rJson['response']['checkin']) + '\n')
-                    count += 1
+                    ch_json = rJson['response']['checkin']
+                    clean_ch_json = self.shorten_shout_json(ch_json)
+                    if clean_ch_json != '':
+                        ch_file.write(clean_ch_json)
+                        ch_file.write('\n')
+                        count += 1
 
                 except IndexError, e:
                     print 'IndexError', e
@@ -70,10 +76,16 @@ class Twitter2foursquare(object):
 
                 except ValueError, e:
                     print 'ValueError', e
-                    pass
+                    continue
 
 
     def get_categories(self):
+        """
+        Downloads foursquare's current categories list.
+
+        :return: None
+        :rtype: None
+        """
         r = requests.get('https://api.foursquare.com/v2/venues/categories?oauth_token={at}'
                          .format(at=self.a_token) + '&v=20150603')
         rJson = r.json()
@@ -104,19 +116,70 @@ class Twitter2foursquare(object):
         return len(set([self.checkins[c]['userID'] for c in self.checkins]))
 
 
-if __name__ == '__main__':
+    def batch_conversion(self):
+        os.chdir('../../data/CA_split/')
+        # split_file_list = sorted(os.listdir(os.getcwd()), key=lambda filename:int(filename[27:-4]))
+        split_file_list = sorted(os.listdir(os.getcwd()), key=lambda filename:int(filename[21:-4]))
+        for i, fname in enumerate(split_file_list):
+            print i, '\t', fname
+        print '\n'
+
+        fout = '../CA_shouts_transformed.dat'
+        for f in split_file_list:
+            print('processing ' + f)
+            self.tweets_to_checkins(f, fout)
+            print('done with ' + f + '\n')
+            time.sleep(3600)
+
+
+    @staticmethod
+    def shorten_shout_json(ch_json):
+        """
+        Edits a foursquare checkin json to include only the fields we need.
+
+        :param ch_json: raw checkin json
+        :type ch_json: dict{}
+        :return: new json string with needed fields
+        :rtype: str
+        """
+        result = {}
+        try:
+            result['id'] = ch_json['id']
+            result['userid'] = ch_json['user']['id']
+            result['userLast'] = ch_json['user'].get('lastName', None)
+            result['userFirst'] = ch_json['user'].get('firstName', None)
+            result['venue'] = ch_json['venue']['id']
+            result['venueName'] = ch_json['venue'].get('name', None)
+            result['venueCity'] = ch_json['venue']['location'].get('city', None)
+            result['venueState'] = ch_json['venue']['location'].get('state', None)
+            result['venueZip'] = ch_json['venue']['location'].get('postalCode', None)
+            venCat = ch_json['venue'].get('categories', None)
+            if not venCat:
+                result['venueCatID'] = None
+                result['venueCatName'] = None
+            else:
+                result['venueCatID'] = venCat[0]['id']
+                result['venueCatName'] = venCat[0]['name']
+            result['shout'] = ch_json['shout']
+            when = datetime.datetime.utcfromtimestamp(int(ch_json['createdAt']) + 60*int(ch_json['timeZoneOffset']))
+            result['date'] = when.date().strftime("%Y-%m-%d")
+            result['time'] = when.time().strftime("%H:%M:%S")
+            result['weekday'] = when.isoweekday()  # Monday = 1, Sunday = 7
+        except KeyError, e:
+            print 'KeyError:', e, 'while on checkin:', result['id']
+            return ''
+        except IndexError, e:
+            print 'IndexError:', e, 'while on checkin:', result['id']
+            pass
+        return ujson.dumps(result)
+# end class Twitter2foursquare
+
+def main():
     t2f = Twitter2foursquare()
     t2f.get_categories()
+    t2f.batch_conversion()
 
-    os.chdir('../../data/CA_split/')
-    split_file_list = sorted(os.listdir(os.getcwd()), key=lambda filename: int(filename[27:-4]))
-    for i, fname in enumerate(split_file_list):
-        print i, '\t', fname
-    print '\n'
 
-    fout = '../CA_shouts_30-34.dat'
-    for f in split_file_list:
-        print('processing ' + f)
-        t2f.tweets_to_checkins(f, fout)
-        print('done with ' + f + '\n')
-        time.sleep(3600)
+
+if __name__ == '__main__':
+    main()

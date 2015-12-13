@@ -142,12 +142,8 @@ def update_shout_counts():
 def main():
     db.connect()
     db.create_tables([Checkin, User, Venue, UserVenue], safe=True)
-    # fin = '../../data/CA_shouts_1-28.dat'
-    fout = '../../data/CA_shouts_30-34_transformed.dat'
-    # transform_shouts.transform_shouts(fin, fout)
-    bulk_insert_ch(fout)
-    fout = '../../data/CA_shouts_1-28_transformed.dat'
-    bulk_insert_ch(fout)
+    shortened_shouts_file = '../../data/CA_shouts_transformed.dat'
+    bulk_insert_ch(shortened_shouts_file)
     update_shout_counts()
     db.close()
 

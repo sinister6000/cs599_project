@@ -5,6 +5,7 @@ __metaclass__ = type
 
 import codecs
 import ujson
+import os
 from itertools import izip_longest
 
 
@@ -70,23 +71,28 @@ def grouper(chunk_size, iterable, fillvalue=None):
     args = [iter(iterable)] * chunk_size
     return izip_longest(fillvalue=fillvalue, *args)
 
+def main():
+    f_out = '../../data/CA_filtered_twitData.dat'
 
-if __name__ == '__main__':
+    twitData_list = [fname for fname in sorted(os.listdir('../../data/')) if fname.startswith('twitData')]
 
-    f_out = '../../data/CA_filtered_twitData_26-27.dat'
-    data_fname_prefix = '../../data/twitData'
-    for i in range(26, 28):
-        data_fname = '{0}{1}.dat'.format(data_fname_prefix, i)
+    for data_fname in twitData_list:
         try:
             print 'Filtering file: ' + data_fname
-            filter_tweets(data_fname, f_out)
+            filter_tweets('../../data/' + data_fname, f_out)
         except IOError, e:
             print IOError.message
             print 'Skipping file ' + data_fname
 
+    # Foursquare API limits 500 of these types of accesses per hour, so split file into chunks of 500 shouts.
     n = 500
     split_fname_prefix = '../../data/CA_split/{0}_'.format(f_out[11:-4])
     with codecs.open(f_out, 'r', encoding='utf-8') as f:
         for i, g in enumerate(grouper(n, f, fillvalue=''), 1):
             with codecs.open('{0}{1}.dat'.format(split_fname_prefix, i*n), 'w', encoding='utf-8') as split_fout:
                 split_fout.writelines(g)
+
+    os.remove('../../data/CA_filtered_twitData.dat')
+
+if __name__ == '__main__':
+    main()

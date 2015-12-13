@@ -13,7 +13,7 @@ def prep_json(ch_json):
     :param ch_json: raw checkin json
     :type ch_json: dict{}
     :return: new json with needed fields
-    :rtype: json str
+    :rtype: str
     """
     result = {}
     try:
