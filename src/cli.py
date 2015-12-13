@@ -12,9 +12,10 @@ import prepdata.sqliteQueries as sq
 
 LT = u'(¯`·._.·(¯`·._.·(¯`·._.·'
 RT = u'·._.·´¯)·._.·´¯)·._.·´¯)'
-LT2 = u'■═════╣'
-RT2 = u'╠═════■'
-HR = u'\n╠════════════════════════════════════════════════════════╣'
+FL = u'░░░░░░░░░░░░░░▒▒▒▒▒▒▒▒▓▓▓▓█████████'
+FR = u'█████████▓▓▓▓▒▒▒▒▒▒▒▒░░░░░░░░░░░░░░'
+HR = (FL + FR) * 2
+
 
 
 class CLI(object):
@@ -23,14 +24,11 @@ class CLI(object):
 
     """
     def __init__(self):
-        print u'\n\n'
-        print u'░░░░░░░░░░░░░░▒▒▒▒▒▒▒▒▓▓▓▓█████████████████▓▓▓▓▒▒▒▒▒▒▒▒░░░░░░░░░░░░░░'
-        print u'     ', LT2, u'Welcome to the TOPIC MODEL INFO (TMI) tool', RT2
-        print u'░░░░░░░░░░░░░░▒▒▒▒▒▒▒▒▓▓▓▓█████████████████▓▓▓▓▒▒▒▒▒▒▒▒░░░░░░░░░░░░░░\n'
-        # print u"   [ enter '-1' into any prompt to quit ]''\n\n"
-        print u'\n'
+        print u'\n\n', HR
+        print u'            ', FR, u'Welcome to the TOPIC MODEL INFO (TMI) tool', FL
+        print HR, u'\n'
         self.driver = self.load_or_new_tmi()
-        print(u'░▒▓█ ■ Corpus and Model Successfully Loaded.\n', HR)
+        print u'░▒▓█ ■ Corpus and Model Successfully Loaded.\n\n', HR
 
 
     def load_or_new_tmi(self):
@@ -39,12 +37,15 @@ class CLI(object):
         print(u'\n■ Before you can use TMI, you must load a test environment (a corpus & a topic model).')
         print(u'■ Enter 1 or 2 to select (recommended: 2 - TMI comes with a LOT of these to try)\n')
         print(u'  (1) Create new TMI test environment')
-        print(u'  (2) Display list of saved environments to load (TMI includes many examples).\n')
-        cmd = get_input('> ', int, 1, 2)
+        print(u'  (2) Display list of saved environments to load (TMI includes many examples).')
+        print(u'  (3) ■ Go back to main menu ■\n')
+        cmd = get_input('> ', int, 1, 3)
         if cmd is 1:
             return self.new_tmi()
         elif cmd is 2:
             return self.load_tmi()
+        elif cmd is 3:
+            self.main_menu()
         else:
             print u'unrecognized command'
 
@@ -60,7 +61,7 @@ class CLI(object):
         print(u"░▒▓█   (1) gensim's basic tokenizer")
         print(u'░▒▓█   (2) twokenizer from TweetNLP')
         print(u'░▒▓█   (3) TweetTokenizer from NLTK')
-        print(u'░▒▓█   (4) ■ go back to main menu ■\n')
+        print(u'░▒▓█   (4) ■ Go back to main menu ■\n')
         cmd = get_input('> ', int, 1, 3)
         if cmd is 1:
             tokenizer = 'gensim'
@@ -86,8 +87,8 @@ class CLI(object):
         print(u'░▒▓█ ■ Auto learns an asymmetric prior directly from the data (much slower).\n')
         print(u'░▒▓█   (1) symmetric')
         print(u'░▒▓█   (2) auto')
-        print(u'░▒▓█   (3) ■ go back to main menu ■\n')
-        cmd = get_input('> ', int, 1, 2)
+        print(u'░▒▓█   (3) ■ Go back to main menu ■\n')
+        cmd = get_input('> ', int, 1, 3)
         if cmd is 1:
             alpha = 'symmetric'
         elif cmd is 2:
@@ -101,8 +102,9 @@ class CLI(object):
         print(u'\n░▒▓█ ■ You have chosen the {} tokenizer, {} topics, {} passes, and {} alpha.\n'
               .format(tokenizer, num_topics, num_passes, alpha))
         print(u'░▒▓█   (1) Build environment with these settings.')
-        print(u'░▒▓█   (2) I need to change a parameter.\n')
-        cmd = get_input('> ', int, 1, 2)
+        print(u'░▒▓█   (2) I need to change a parameter.')
+        print(u'░▒▓█   (3) ■ Go back to main menu ■\n')
+        cmd = get_input('> ', int, 1, 3)
         if cmd is 1:
             # create LdaDriver with above settings
             driver_settings = {'corpus_type':tokenizer,
@@ -125,9 +127,10 @@ class CLI(object):
             return LdaDriver(**driver_settings)
         elif cmd is 2:
             self.new_tmi()
+        elif cmd is 3:
+            self.main_menu()
         else:
             print u'unrecognized command'
-
 
     def load_tmi(self):
         """Prompts for file selection. Loads lda_driver from selected file
@@ -138,6 +141,7 @@ class CLI(object):
         for i, fname in enumerate(saved_list):
             print(u'░▒▓█   ({}) {}'.format(i, fname))
         print(u'░▒▓█   ({}) ■ Create new test environment ■'.format(len(saved_list)))
+
         cmd = get_input('> ', int, 0, len(saved_list))
         if cmd is len(saved_list):
             return self.new_tmi()
@@ -149,7 +153,6 @@ class CLI(object):
             tokenizer = m.group(1)
             num_topics = int(m.group(2))
             num_passes = int(m.group(3))
-
             alpha = m.group(4)
             driver_settings = {'corpus_type':tokenizer,
                                'num_topics':num_topics,
@@ -161,7 +164,7 @@ class CLI(object):
             return driver
 
     def main_menu(self):
-        print u'\n{} TMI Main Menu {}\n'.format(LT2, RT2)
+        print u'\n{} TMI Main Menu {}\n'.format(FR, FL)
         print u'▓█ ■ Enter a selection:'
         print u'▓█ (1) Display current environment settings'
         print u'▓█ (2) Change environment'
@@ -177,13 +180,16 @@ class CLI(object):
             self.main_menu()
         elif cmd is 3:
             self.topic_menu()
-            self.main_menu()
+            # self.main_menu()
         elif cmd is 4:
             self.venue_menu()
-            self.main_menu()
+            # self.main_menu()
         elif cmd is 5:
             print(u'Bye')
             exit(0)
+        else:
+            print(u'Command unrecognized.')
+            self.main_menu()
 
     def topic_menu(self):
         """
@@ -216,8 +222,8 @@ class CLI(object):
         print(u'░▒▓█   (1) 30 Venue Heatmap - top 30 venues')
         print(u'░▒▓█   (2) 30 Venue MDS - top 30 venues')
         print(u'░▒▓█   (3) 600 Venue MDS - top 600 venues')
-        print(u'░▒▓█   (4) MDS - top 50 venues from top 5 categories')
-        print(u'░▒▓█   (5) Temporal view. - top 30 venues')
+        print(u'░▒▓█   (4) MDS - top 40 venues from each of top 5 categories')
+        print(u'░▒▓█   (5) Temporal view. - top 2 venues from top 5 categories')
         print(u'░▒▓█   (6) ■ back to main menu ■\n')
         pick_vis = get_input('> ', int, 1, 6)
         if pick_vis is 1:
@@ -235,11 +241,11 @@ class CLI(object):
             self.venue_menu()
         elif pick_vis is 4:
             print u'\n░░▒▒▓█ ■ You must close graph in order to continue using program.'
-            self.driver.vis_super_cat_MDS(7)
+            self.driver.vis_super_cat_MDS(5)
             self.venue_menu()
         elif pick_vis is 5:
-            # self.temporal_menu()
-            for v in sq.topn_venues(20):
+            cat_list, ven_list = sq.venues_from_top_n_categories(2, 5)
+            for v in ven_list:
                 self.driver.temporal_weekday_single_ven(v.id)
             self.venue_menu()
         elif pick_vis is 6:

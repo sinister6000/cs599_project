@@ -7,7 +7,7 @@ import math
 
 import peewee as pw
 
-from sqliteModels import User, Venue, Checkin
+from prepdata.sqliteModels import User, Venue, Checkin
 
 db = pw.SqliteDatabase('../../data/db/10-27.sqlite')
 
@@ -127,12 +127,14 @@ def get_categories(n):
                                                  'where shout_count > ?)', n)]
 
 
-def venues_from_top_n_categories(n=15):
+def venues_from_top_n_categories(m=40, n=5):
     """
-    Gets the top n categories ordered by shout_count
+    Gets the top m venues from the top n categories ordered by shout_count
 
-    :param n:
-    :type n:
+    :param m: the number of venues from each category to return
+    :type m: int
+    :param n: the number of categories to return
+    :type n: int
     :return: 2 lists - one for categories, and one for venues
     :rtype: ([], [])
     """
@@ -148,7 +150,7 @@ def venues_from_top_n_categories(n=15):
                                 .select()
                                 .where(Venue.cat_id == v.cat_id)
                                 .order_by(-Venue.shout_count)
-                                .limit(math.floor(200/n)))]
+                                .limit(m))]
         cat_list.append(v.cat_name)
         venue_list.extend(vens)
     return cat_list, venue_list

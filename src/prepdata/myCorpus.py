@@ -6,7 +6,7 @@ import codecs
 import os
 import types
 
-import twokenize
+import prepdata.twokenize as twokenize
 from gensim import corpora, utils
 from nltk.corpus import stopwords
 from nltk.tokenize import TweetTokenizer

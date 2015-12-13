@@ -17,13 +17,15 @@ from sklearn.manifold import MDS
 import pyLDAvis
 import pyLDAvis.gensim as pg
 
-from myCorpus import MyCorpus, tokenize
-import sqliteQueries as sq
+from prepdata.myCorpus import MyCorpus, tokenize
+import prepdata.sqliteQueries as sq
 
 
 _SQRT2 = np.sqrt(2)  # sqrt(2) with default precision np.float64
 ISO2DAY = {1:'Mon', 2:'Tue', 3:'Wed', 4:'Thu', 5:'Fri', 6:'Sat', 7:'Sun'}
-HR = u'\n╠════════════════════════════════════════════════════════╣'
+FL = u'░░░░░░░░░░░░░░▒▒▒▒▒▒▒▒▓▓▓▓█████████'
+FR = u'█████████▓▓▓▓▒▒▒▒▒▒▒▒░░░░░░░░░░░░░░'
+HR = (FL + FR)*2
 
 
 class LdaDriver(object):
@@ -159,8 +161,7 @@ class LdaDriver(object):
         print(u'  {} nearest neighbors'.format(n))
         for (venue, distance) in neighbors:
             print(u'    {:1.3f}  {}'.format(distance, venue.name))
-        print u''
-        print HR
+        print u'\n', HR, u'\n'
 
     def print_topics(self, n=10):
         """
@@ -177,7 +178,7 @@ class LdaDriver(object):
             print(u'\nTOPIC {0}:'.format(i))
             for (prob, word) in topic:
                 print(u'   {:1.5f}   {}'.format(prob, word))
-        print HR
+        print u'\n', HR, u'\n'
 
     def compare_venues(self, venues):
         """
@@ -224,7 +225,7 @@ class LdaDriver(object):
 
         for i, row in enumerate(self.dist_matrix):
             print ('{:>6} | '.format(ven_list[i]) + '  '.join('{:>1.3f}'.format(val) for val in row[:i + 1]))
-        print HR
+        print u'\n', HR, u'\n'
 
 
     def temporal_weekday_single_ven(self, ven_id):
@@ -310,7 +311,7 @@ class LdaDriver(object):
             ax.grid(color='white', linestyle='solid')
             fig = plt.gcf()
             fig.set_size_inches(10, 8, forward=True)
-            fig.subplots_adjust(top=0.63, bottom=0.03, left=0.30, right=0.82)
+            fig.subplots_adjust(top=0.63, bottom=0.03, left=0.30, right=0.93)
 
             # set the colormap & norm
             norm = mplcolors.Normalize(vmin=0.0, vmax=1.0)
@@ -348,7 +349,7 @@ class LdaDriver(object):
             # draw colorbar
             cb1 = fig.colorbar(heatmap)
             cb1.set_label('Distance')
-            fig.subplots_adjust(top=0.70, bottom=0.03, left=0.22, right=0.88)
+            # fig.subplots_adjust(top=0.70, bottom=0.03, left=0.22, right=0.88)
 
             if fout is None:
                 plt.show()
@@ -535,14 +536,13 @@ class LdaDriver(object):
         :return: None
         :rtype: None
         """
-        category_list, venue_list = sq.venues_from_top_n_categories(n)
+        category_list, venue_list = sq.venues_from_top_n_categories(200/n, n)
         ven_dmatrix = self.compare_venues(venue_list)
 
         # make dict to assign numbers to category names for coloring in graph
         category_name2num = {}
         for i, category_name in enumerate(category_list):
             category_name2num[category_name] = i
-
 
         with plt.style.context('ggplot'):
             # setup plot figure
